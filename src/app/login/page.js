@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import axios from 'axios';
 import { useRouter } from 'next/navigation';
 
@@ -18,7 +18,6 @@ const Login = () => {
     e.preventDefault();
 
     try {
-      // Obter o token CSRF antes de fazer a requisição de login
       await getCsrfToken();
 
       const response = await axios.post('http://localhost:8000/api/login', {
@@ -27,11 +26,10 @@ const Login = () => {
       });
       const { access_token } = response.data;
 
-      // Salve o token no localStorage ou em cookies
       localStorage.setItem('authToken', access_token);
-
-      // Redirecione para a página principal
-      router.push('/');
+      console.log('Token salvo:', access_token);
+      
+      router.push('/dashboard');
     } catch (err) {
       setError(err.response?.data?.message || 'Something went wrong');
     }
