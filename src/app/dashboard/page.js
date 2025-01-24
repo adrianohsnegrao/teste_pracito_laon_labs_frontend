@@ -3,74 +3,15 @@
 import { useEffect, useState } from 'react';
 import axios from 'axios';
 import { useRouter } from 'next/navigation';
-
-const Navbar = ({ onSearch, user }) => {
-  const [query, setQuery] = useState('');
-  const [menuOpen, setMenuOpen] = useState(false);
-  const router = useRouter();
-
-  const handleSearch = (e) => {
-    e.preventDefault();
-    onSearch(query);
-  };
-
-  const handleLogout = () => {
-    localStorage.removeItem('authToken');
-    localStorage.removeItem('user');
-    router.push('/login');
-  };
-
-  return (
-    <nav className="bg-blue-500 p-4 text-white flex justify-between items-center">
-      <div>
-        <a href="/dashboard" className="text-2xl font-bold">Dashboard</a>
-        <ul className="flex space-x-4 ml-6">
-          <li className="relative group">
-            <a href="#" className="hover:underline">Menu 1</a>
-            <ul className="absolute left-0 hidden group-hover:block bg-blue-600 p-2 mt-1 rounded shadow-md">
-              <li><a href="#" className="block px-4 py-2 hover:underline">Submenu 1</a></li>
-              <li><a href="#" className="block px-4 py-2 hover:underline">Submenu 2</a></li>
-              <li><a href="#" className="block px-4 py-2 hover:underline">Submenu 3</a></li>
-            </ul>
-          </li>
-          <li className="relative group">
-            <a href="#" className="hover:underline">Menu 2</a>
-            <ul className="absolute left-0 hidden group-hover:block bg-blue-600 p-2 mt-1 rounded shadow-md">
-              <li><a href="#" className="block px-4 py-2 hover:underline">Submenu 1</a></li>
-              <li><a href="#" className="block px-4 py-2 hover:underline">Submenu 2</a></li>
-            </ul>
-          </li>
-        </ul>
-      </div>
-      <div className="flex items-center">
-        <form onSubmit={handleSearch} className="flex items-center">
-          <input
-            type="text"
-            className="p-2 rounded text-black"
-            placeholder="Search..."
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-          />
-          <button type="submit" className="ml-2 p-2 bg-green-500 rounded hover:bg-green-600">Search</button>
-        </form>
-        <div className="relative ml-4">
-          <button onClick={() => setMenuOpen(!menuOpen)} className="hover:underline">
-            {user?.name}
-          </button>
-          {menuOpen && (
-            <ul className="absolute right-0 bg-blue-600 p-2 mt-1 rounded shadow-md">
-              <li><button onClick={handleLogout} className="block px-4 py-2 hover:underline">Logout</button></li>
-            </ul>
-          )}
-        </div>
-      </div>
-    </nav>
-  );
-};
+import Navbar from './Navbar';
+import Usuarios from './usuarios';
+import Planos from './planos';
+import FilmesESeries from './filmeseseries';
 
 const Dashboard = () => {
   const [user, setUser] = useState(null);
-  const [searchResults, setSearchResults] = useState([]);
+  const [content, setContent] = useState('dashboard');
+  const [loading, setLoading] = useState(false);
   const router = useRouter();
 
   useEffect(() => {
@@ -108,7 +49,35 @@ const Dashboard = () => {
 
   const handleSearch = (query) => {
     // Implementar a lógica de busca conforme necessário
-    setSearchResults([`Resultado para "${query}"`]);
+    setContent('searchResults');
+  };
+
+  useEffect(() => {
+    if (content) {
+      setLoading(false);
+    }
+  }, [content]);
+
+  const renderContent = () => {
+    switch (content) {
+      case 'usuarios':
+        return <Usuarios />;
+      case 'planos':
+        return <Planos />;
+      case 'filmes-e-series':
+        return <FilmesESeries />;
+      case 'searchResults':
+        return <div>Search results for "{query}"</div>;
+      default:
+        return <div>Welcome to the Dashboard!</div>;
+    }
+  };
+
+  const handleMenuClick = async (menu) => {
+    setLoading(true);
+    await new Promise(resolve => setTimeout(resolve, 500)); // Simular tempo de carregamento
+    setContent(menu); // Definir o novo conteúdo
+    setLoading(false);
   };
 
   if (!user) {
@@ -123,24 +92,16 @@ const Dashboard = () => {
 
   return (
     <div>
-      <Navbar onSearch={handleSearch} user={user} />
-      <div className="p-8">
-        <h1 className="text-2xl font-bold">Dashboard</h1>
-        <p>Welcome, {user.name}!</p>
-        <div className="mt-8">
-          {searchResults.length > 0 && (
-            <div>
-              <h2 className="text-xl font-bold">Search Results</h2>
-              <ul>
-                {searchResults.map((result, index) => (
-                  <li key={index} className="mt-2">{result}</li>
-                ))}
-              </ul>
-            </div>
-          )}
+      <Navbar onSearch={handleSearch} user={user} setContent={handleMenuClick} />
+      {loading ? (
+        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
+          <div className="text-white text-2xl font-bold">Carregando...</div>
         </div>
-        {/* Adicione mais conteúdo do dashboard aqui */}
-      </div>
+      ) : (
+        <div className="p-8">
+          {renderContent()}
+        </div>
+      )}
     </div>
   );
 };
